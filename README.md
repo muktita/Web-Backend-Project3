@@ -116,17 +116,18 @@ It contains four tables.
 
 
 ### User Authentication Routes
+#### Registering a new user
+```
+http POST http://tuffix-vm/register username=<new username> password=<new password>
+```
+Using a `GET` request will display a message asking to use `POST`. It will also give a `400` error when the username already exists.
 #### Logging In
 ```
 http GET http://tuffix-vm/login --auth <username>:<password>
 
 ```
 Will return `{"authenticated": True}` if properly authenticated.
-#### Registering a new user
-```
-http POST http://tuffix-vm/register username=<new username> password=<new password>
-```
-Using a `GET` request will display a message asking to use `POST`. It will also give a `400` error when the username already exists.
+
 
 ### Wordle Game Routes
 #### Starting a game

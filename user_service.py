@@ -77,7 +77,7 @@ async def register():
     Register
     
     Register a user. 
-    Note: Use HTTPie to test this route (not /docs or /redocs). See README.md for more info.
+    Note: Use HTTPie to test this route (not /docs or /redocs). 
     """
 
     if request.method == "POST":
