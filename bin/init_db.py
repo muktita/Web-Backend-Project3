@@ -5,14 +5,14 @@ from databases import Database
 import asyncio
 import json
 
-database = Database('sqlite+aiosqlite:///wordle.db')
-userDatabase = Database('sqlite+aiosqlite:///user.db')
+users_database = Database('sqlite+aiosqlite:///database/users.db')
+games_database = Database('sqlite+aiosqlite:///database/games.db')
 
-async def init_db():
-    await userDatabase.connect()
+async def init_users_db():
+    await users_database.connect()
 
     query = "DROP TABLE IF EXISTS user"
-    await userDatabase.execute(query=query)
+    await users_database.execute(query=query)
     
     query = """
             CREATE TABLE user (
@@ -21,23 +21,21 @@ async def init_db():
                 pwd BLOB NOT NULL
             )
             """
-    await userDatabase.execute(query=query)
+    await users_database.execute(query=query)
 
-    print("User database has been initiailized.")
+    print("Users database has been initiailized.")
 
-async def wordle_db():
-    await database.connect()
+async def init_games_db():
+    await games_database.connect()
 
     query = "DROP TABLE IF EXISTS games"
-    await database.execute(query=query)
+    await games_database.execute(query=query)
     query = "DROP TABLE IF EXISTS guesses"
-    await database.execute(query=query)
+    await games_database.execute(query=query)
     query = "DROP TABLE IF EXISTS secret_word"
-    await database.execute(query=query)
+    await games_database.execute(query=query)
     query = "DROP TABLE IF EXISTS valid_words"
-    await database.execute(query=query)
-
-
+    await games_database.execute(query=query)
 
     query = """ 
             CREATE TABLE games (
@@ -48,37 +46,49 @@ async def wordle_db():
                 hasWon INTEGER DEFAULT 0 NOT NULL
             )
             """
-    await database.execute(query=query)
+    await games_database.execute(query=query)
 
     query = """
             CREATE TABLE guesses (
                 guessid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                gameid INTEGER NOT NULL,
+                gameid TEXT NOT NULL,
                 guess TEXT NOT NULL,
                 UNIQUE(gameid, guess)
+                FOREIGN KEY(gameid) REFERENCES games(gameid)
             )
             """
-    await database.execute(query=query)
+    await games_database.execute(query=query)
 
     query = """ 
             CREATE TABLE secret_word (
                 word TEXT PRIMARY KEY
             )
             """
-    await database.execute(query=query)
+    await games_database.execute(query=query)
 
     query = """ 
             CREATE TABLE valid_words (
                 word TEXT PRIMARY KEY
             )
             """
-    await database.execute(query=query)
+    await games_database.execute(query=query)
+    print("Games database has been initialized.")
 
+    #Creating Index
+    print("Initializing Indexes.")
 
+    query = """
+            CREATE INDEX games_id_index ON games(
+                username,
+                isActive);
+            """
+    await games_database.execute(query=query)
 
-# Uncomment in main() for this function to be able to execute: (REMEMBER)
+    print("Index Created.")
+    
+
 async def populate_tables():
-    # fill secret_word and valid_words with words from correct.json and valid.json respectively
+    # Fill secret_word and valid_words with words from correct.json and valid.json:
     correct_json = open("share/correct.json")
     valid_json = open("share/valid.json")
     
@@ -87,22 +97,23 @@ async def populate_tables():
             INSERT INTO secret_word (word) VALUES (:word)
             """
     correct_words = [{"word": word} for word in json.load(correct_json)]
-    await database.execute_many(query=query, values=correct_words)
+    await games_database.execute_many(query=query, values=correct_words)
 
     print("Populating valid_words table...")
     query = """
             INSERT INTO valid_words (word) VALUES (:word)
             """
     valid_words = [{"word": word} for word in json.load(valid_json)]
-    await database.execute_many(query=query, values=valid_words)
-    await database.execute_many(query=query, values=correct_words)
+    await games_database.execute_many(query=query, values=valid_words)
+    await games_database.execute_many(query=query, values=correct_words)
 
 
 
 def main():
-    asyncio.run(init_db()) 
-    asyncio.run(wordle_db())
+    asyncio.run(init_users_db()) 
+    asyncio.run(init_games_db())
     asyncio.run(populate_tables())
 
 if __name__ == "__main__":
     main()
+

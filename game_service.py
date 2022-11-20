@@ -1,4 +1,4 @@
-# Project 1 - Wordle Mock Backend
+# Project 2 - API Gateway - Wordle Mock Backend
 
 import toml
 import sqlite3
@@ -7,7 +7,7 @@ import base64
 import dataclasses
 import uuid
 
-import userService
+import utils.helpers as helpers
 
 from typing import Tuple, Optional
 from quart import Quart, jsonify, g, request, abort
@@ -16,7 +16,7 @@ from quart_schema import QuartSchema, validate_request
 app = Quart(__name__)
 QuartSchema(app)
 
-app.config.from_file(f"./config/{__name__}.toml", toml.load)
+app.config.from_file(f"./config/app.toml", toml.load)
 
 
 @dataclasses.dataclass
@@ -29,7 +29,7 @@ class Username:
     username: str
 
 async def _connect_db():
-    database = databases.Database(app.config["DATABASES"]["URL1"])
+    database = databases.Database(app.config["DATABASES"]["GAMES"])
     await database.connect()
     return database
 
@@ -57,10 +57,9 @@ async def home():
     This is just the welcome message.
     """
     
-    return jsonify_message("Welcome to wordle!")
+    return helpers.jsonify_message("Welcome to game service.")
 
 @app.route("/wordle/start", methods=["POST"])
-# @validate_request(Username)
 async def start_game():
     """
     Start Game
@@ -82,7 +81,7 @@ async def start_game():
         await db.execute(query=query, values=values)
     except sqlite3.IntegrityError as e:
         abort(409, e)
-    return jsonify_message(f"Game started with id: {gameid}.")
+    return helpers.jsonify_message(f"Game started with id: {gameid}.")
 
 
 @app.route("/wordle/games", methods=["GET"])
@@ -94,6 +93,7 @@ async def list_active_games():
     or games that have been won are not included in the list.
     """
     username = request.authorization.username
+
     db =  await _get_db()
     query = """
             SELECT gameid FROM games WHERE username = :username AND isActive = 1
@@ -104,14 +104,12 @@ async def list_active_games():
     if games:
         return list(map(dict, games))
     else:
-        return jsonify_message(f"No active games found for user, {username}."), 404
+        return helpers.jsonify_message(f"No active games found for user, {username}."), 404
 
 
-async def is_active_game(db, username, gameid) -> bool:
+async def game_is_active(db, username, gameid) -> bool:
     query = """
-            SELECT *
-            FROM games
-            WHERE username = :username AND gameid = :gameid AND isActive = 1
+            SELECT * FROM games WHERE username = :username AND gameid = :gameid AND isActive = 1
             """
     app.logger.info(query), app.logger.warning(query)
     game = await db.fetch_one(query=query, values={"username": username, "gameid": gameid})
@@ -133,7 +131,7 @@ async def retrieve_game(gameid):
     username = request.authorization.username
     db =  await _get_db()
 
-    if await is_active_game(db, username, gameid):
+    if await game_is_active(db, username, gameid):
         query = """
                 SELECT guess, secretWord as secret_word
                 FROM guesses
@@ -149,11 +147,11 @@ async def retrieve_game(gameid):
 
 
 def calculate_game_status(guesses):
-    # clean up and check guesses
+    # Clean up and check guesses:
     num_guesses = len(guesses)
     list_guesses = []
     for guess in guesses:
-        correct_letters, correct_indices = compare_guess(guess.guess, guess.secret_word)
+        correct_letters, correct_indices = helpers.compare_guess(guess.guess, guess.secret_word)
         list_guesses.append({
             "guess": guess.guess,
             "correct_letters": correct_letters,
@@ -181,17 +179,17 @@ async def make_guess(gameid, data: Guess):
     data = await request.get_json()
     db =  await _get_db()
 
-    if await is_active_game(db, username, gameid):
-        # validate the guessed word first
+    if await game_is_active(db, username, gameid):
+        # Validate the guessed word first:
         if len(data["guess"]) != app.config["WORDLE"]["WORDLE_LENGTH"]:
-            return jsonify_message(f"Not a valid guess! Please only guess {app.config['WORDLE']['WORDLE_LENGTH']}-letter words. This attempt does not count.")
+            return helpers.jsonify_message(f"Not a valid guess! Please only guess {app.config['WORDLE']['WORDLE_LENGTH']}-letter words. This attempt does not count.")
         else:
             query = "SELECT * FROM valid_words WHERE word = :guess"
             app.logger.info(query), app.logger.warning(query)
             is_valid = await db.fetch_one(query=query, values={"guess": data["guess"]})
 
             if not is_valid:
-                return jsonify_message(f"{data['guess']} is not a valid word! Try again. This attempt does not count.")
+                return helpers.jsonify_message(f"{data['guess']} is not a valid word! Try again. This attempt does not count.")
 
         # guess was valid, proceed to store and check game state
         try:
@@ -222,7 +220,7 @@ async def make_guess(gameid, data: Guess):
         guesses = await db.fetch_all(query=query, values={"gameid": gameid})
         guesses = calculate_game_status(guesses)
 
-        is_correct = check_guess(data["guess"], secret_word)
+        is_correct = helpers.check_guess(data["guess"], secret_word)
         max_num_attempts = app.config["WORDLE"]["MAX_NUM_ATTEMPTS"]
 
         if is_correct:
@@ -233,7 +231,7 @@ async def make_guess(gameid, data: Guess):
                     """
             await db.execute(query=query, values={"gameid": gameid})
 
-            return jsonify_message(f"Correct! The answer was {secret_word}.")
+            return helpers.jsonify_message(f"Correct! The answer was {secret_word}.")
         elif guesses["num_guesses"] == max_num_attempts and not is_correct:
             query = """
                     UPDATE games 
@@ -242,7 +240,7 @@ async def make_guess(gameid, data: Guess):
                     """
             await db.execute(query=query, values={"gameid": gameid})
             
-            return jsonify_message(f"You have lost! You have made {max_num_attempts} incorrect attempts. The secret word was {secret_word}.")
+            return helpers.jsonify_message(f"You have lost! You have made {max_num_attempts} incorrect attempts. The secret word was {secret_word}.")
         else:
             remaining_attempts = max_num_attempts - guesses["num_guesses"]
             return {
@@ -261,31 +259,3 @@ def not_found(e):
 @app.errorhandler(409)
 def conflict(e):
     return {"error": str(e)}, 409
-
-
-
-# # ----------------------------Helpers---------------------------- #
-
-def jsonify_message(message):
-    return {"message": message}
-
-
-def compare_guess(guess, secret_word):
-    correct_letters = set()
-    correct_indices = []
-    for sw_idx in range(0, len(secret_word)):
-        for g_idx in range(0, len(guess)):
-            if sw_idx == g_idx and guess[g_idx] == secret_word[sw_idx]:
-                correct_indices.append(g_idx)
-            if guess[g_idx] == secret_word[sw_idx]:
-                correct_letters.add(guess[g_idx])
-    return list(correct_letters), correct_indices
-
-
-def check_guess(guess, secret_word):
-    correct_letters, correct_indices = compare_guess(guess, secret_word)
-    if len(secret_word) == len(correct_indices):
-        is_correct = True
-    else:
-        is_correct = False
-    return is_correct

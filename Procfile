@@ -1,2 +1,2 @@
-app: hypercorn app --reload --debug --bind api.local.gd:$PORT --access-logfile - --error-logfile - --log-level DEBUG
-userService: hypercorn userService --reload --debug --bind api.local.gd:$PORT --access-logfile - --error-logfile - --log-level DEBUG
+game_service: hypercorn game_service --reload --debug --bind api.local.gd:$PORT --access-logfile - --error-logfile - --log-level DEBUG
+user_service: hypercorn user_service --reload --debug --bind api.local.gd:$PORT --access-logfile - --error-logfile - --log-level DEBUG
