@@ -48,13 +48,17 @@ server {
 
        server_name tuffix-vm;
 	
-        location / {
+	location /login {
+		    proxy_pass http://127.0.0.1:3100/login;	
+	}
+        
+	location / {
             auth_request     /auth;
             auth_request_set $auth_status $upstream_status;
 	        proxy_pass 	     http://wordle;
-      }
-
-        location = /auth {
+        }
+	
+    location = /auth {
             internal;
             proxy_pass              http://127.0.0.1:3100/login;
             proxy_pass_request_body off;
