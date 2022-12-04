@@ -5,8 +5,8 @@ This README describes how to run the app and test the various access points.
 ### Authors
 Group 17
 Members: 
-- Brijesh Prajapati (@csu.fullerton.edu)
-- Muktita Kim (muktitakim@csu.fullerton.edu)
+- Akash Butala (akbutala@csu.fullerton.edu)
+- Heet Savla (heetsavla@csu.fullerton.edu)
 - Sam Truong (samtruonh@csu.fullerton.edu)
 
 
@@ -34,6 +34,7 @@ $ python3 -m pip install pytest pytest-asyncio
 $ sudo apt install nginx
 $ sudo apt install --yes nginx-extras
 
+```
 ### Configuring Nginx File
 #### Path (/etc/ngnix/sites-enabled/tutorial.txt)
 
