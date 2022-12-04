@@ -80,16 +80,17 @@ $ sudo service nginx restart
 
 ```
 
+
+### Launching the App
+Use the following command to start the app. (3 game service and 1 user service will start)
+```
+$ foreman start 
+
+```
 ### Initializing the Database
 Before running the app, run the following command to initialize the database and populate the table.
 ```
 $ ./bin/init.sh
-
-```
-### Launching the App
-Use the following command to start the app. (3 game service and 1 user service will start)
-```
-$ foreman start --formation "game_service=3,user_service=1"
 
 ```
 
