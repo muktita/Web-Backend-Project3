@@ -34,7 +34,6 @@ $ python3 -m pip install pytest pytest-asyncio
 $ sudo apt install nginx
 $ sudo apt install --yes nginx-extras
 
-```
 ### Configuring Nginx File
 #### Path (/etc/ngnix/sites-enabled/tutorial.txt)
 
@@ -73,19 +72,10 @@ server {
 }
 
 ```
-### Installing Python libraries for Redis
-$ sudo apt install --yes python3-hiredis
-```
 #### Restart Nginx Service
 After configuration is done restart the the nginx service.
 ```
 $ sudo service nginx restart
-
-```
-### Launching the App
-Use the following command to start the app. (3 game service and 1 user service will start)
-```
-$ foreman start --formation "game_service=3,user_service=1"
 
 ```
 
@@ -93,6 +83,12 @@ $ foreman start --formation "game_service=3,user_service=1"
 Before running the app, run the following command to initialize the database and populate the table.
 ```
 $ ./bin/init.sh
+
+```
+### Launching the App
+Use the following command to start the app. (3 game service and 1 user service will start)
+```
+$ foreman start --formation "game_service=3,user_service=1"
 
 ```
 
