@@ -5,8 +5,8 @@ This README describes how to run the app and test the various access points.
 ### Authors
 Group 17
 Members: 
-- Akash Butala (akbutala@csu.fullerton.edu)
-- Heet Savla (heetsavla@csu.fullerton.edu)
+- Brijesh Prajapati ()
+- Muktita Kim (muktitakim@csu.fullerton.edu)
 - Sam Truong (samtruonh@csu.fullerton.edu)
 
 
