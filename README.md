@@ -73,6 +73,9 @@ server {
 }
 
 ```
+### Installing Python libraries for Redis
+$ sudo apt install --yes python3-hiredis
+```
 #### Restart Nginx Service
 After configuration is done restart the the nginx service.
 ```
